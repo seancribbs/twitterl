@@ -397,7 +397,7 @@ parse_status({struct, PropList}) ->
     in_reply_to_user_id=proplists:get_value(<<"in_reply_to_user_id">>, PropList),
     in_reply_to_status_id=proplists:get_value(<<"in_reply_to_status_id">>, PropList)
   };
-parse_status(_) -> null.
+parse_status(_) -> undefined.
 
 parse_direct_message({struct, PropList}) ->
   #twitter_direct_message {
@@ -407,7 +407,7 @@ parse_direct_message({struct, PropList}) ->
     sender=parse_user(proplists:get_value(<<"sender">>, PropList)),
     recipient=parse_user(proplists:get_value(<<"recipient">>, PropList))
   };
-parse_direct_message(_) -> null.
+parse_direct_message(_) -> undefined.
 
 parse_user({struct, PropList}) ->
   #twitter_user {
@@ -433,7 +433,7 @@ parse_user({struct, PropList}) ->
     notifications=proplists:get_value(<<"notifications">>, PropList),
     statuses_count=proplists:get_value(<<"statuses_count">>, PropList)
   };
-parse_user(_) -> null.
+parse_user(_) -> undefined.
 
 parse_rate_limit_status({struct, PropList}) ->
   #twitter_rate_limit_status {
@@ -442,19 +442,19 @@ parse_rate_limit_status({struct, PropList}) ->
     reset_time_in_seconds=proplists:get_value(<<"reset_time_in_seconds">>, PropList),
     reset_time=parse_twitter_time(proplists:get_value(<<"reset_time">>, PropList))
   };
-parse_rate_limit_status(_) -> null.
+parse_rate_limit_status(_) -> undefined.
 
 parse_trends({struct, PropList}) ->
   {httpd_util:convert_request_date(binary_to_list(proplists:get_value(<<"as_of">>, PropList))),
     lists:map(fun parse_trend/1, proplists:get_value(<<"trends">>, PropList))};
-parse_trends(_) -> null.
+parse_trends(_) -> undefined.
 
 parse_trend({struct, PropList}) ->
   #twitter_search_trend {
     name=proplists:get_value(<<"name">>, PropList),
     url=proplists:get_value(<<"url">>, PropList)
   };
-parse_trend(_) -> null.
+parse_trend(_) -> undefined.
 
 parse_search_results({struct, PropList}) ->
   #twitter_search_results {
@@ -467,7 +467,7 @@ parse_search_results({struct, PropList}) ->
     page=proplists:get_value(<<"page">>, PropList),
     q=proplists:get_value(<<"query">>, PropList)
   };
-parse_search_results(_) -> null.
+parse_search_results(_) -> undefined.
 
 parse_search_result({struct, PropList}) ->
   #twitter_search_result {
@@ -480,7 +480,7 @@ parse_search_result({struct, PropList}) ->
     profile_image_url=proplists:get_value(<<"profile_image_url">>, PropList),
     created_at=httpd_util:convert_request_date(binary_to_list(proplists:get_value(<<"created_at">>, PropList)))
   };
-parse_search_result(_) -> null.
+parse_search_result(_) -> undefined.
 
 % Parses <<"Tue Nov 11 14:34:06 +0000 2008">> format
 parse_twitter_time(Bin) when is_binary(Bin) ->
