@@ -26,7 +26,7 @@
   friendship_exists/3, verify_credentials/1, update_location/2,
   update_delivery_device/2, rate_limit_status/1, favorites/1, favorites/2,
   favorites/3, create_favorite/2, destroy_favorite/2, follow/2, trends/0,
-  search/1, search/2, parse_twitter_time/1
+  search/1, search/2, parse_twitter_time/1, build_json/1
 ]).
 
 -compile([native]).
@@ -312,6 +312,118 @@ search(Terms) when is_list(Terms) ->
   search(Terms, []).
 search(Terms, Params) when is_list(Terms), is_list(Params) ->
   parse_search_results(get_json("http://search.twitter.com/search.json", [{q, Terms}|Params])).
+
+%%%-------------------------------------------------------------------
+%%% @doc Converts any number of twitter objects to mochijson2-compatible structs
+%%%-------------------------------------------------------------------
+build_json(List) when is_list(List) ->
+  lists:map(fun build_json/1, List);
+build_json(Bin) when is_binary(Bin) ->
+  Bin;
+build_json(Int) when is_integer(Int) ->
+  Int;
+build_json(Float) when is_float(Float) ->
+  Float;
+build_json(undefined) -> null;
+build_json(null) -> null;
+build_json(false) -> false;
+build_json(true) -> true;
+build_json({Date, Time}) when is_tuple(Date) andalso size(Date) == 3, 
+                              is_tuple(Time) andalso size(Time) == 3 ->
+  httpd_util:rfc1123_date({Date, Time});
+build_json(User) when is_record(User, twitter_user) ->
+  {struct, 
+    [
+      {<<"id">>, build_json(User#twitter_user.id)},
+      {<<"name">>, build_json(User#twitter_user.name)},
+      {<<"screen_name">>, build_json(User#twitter_user.screen_name)},
+      {<<"location">>, build_json(User#twitter_user.location)},
+      {<<"description">>, build_json(User#twitter_user.description)},
+      {<<"profile_image_url">>, build_json(User#twitter_user.profile_image_url)},
+      {<<"url">>, build_json(User#twitter_user.url)},
+      {<<"protected">>, build_json(User#twitter_user.protected)},
+      {<<"followers_count">>, build_json(User#twitter_user.followers_count)},
+      {<<"profile_background_color">>, build_json(User#twitter_user.profile_background_color)},
+      {<<"profile_text_color">>, build_json(User#twitter_user.profile_text_color)},
+      {<<"profile_link_color">>, build_json(User#twitter_user.profile_link_color)},
+      {<<"profile_sidebar_fill_color">>, build_json(User#twitter_user.profile_sidebar_fill_color)},
+      {<<"profile_sidebar_border_color">>, build_json(User#twitter_user.profile_sidebar_border_color)},
+      {<<"favourites_count">>, build_json(User#twitter_user.favourites_count)},
+      {<<"utc_offset">>, build_json(User#twitter_user.utc_offset)},
+      {<<"time_zone">>, build_json(User#twitter_user.time_zone)},
+      {<<"following">>, build_json(User#twitter_user.following)},
+      {<<"notifications">>, build_json(User#twitter_user.notifications)},
+      {<<"statuses_count">>, build_json(User#twitter_user.statuses_count)},
+      {<<"status">>, build_json(User#twitter_user.status)}
+    ]
+  };
+build_json(Status) when is_record(Status, twitter_status) ->
+  {struct, 
+    [
+      {<<"id">>, build_json(Status#twitter_status.id)},
+      {<<"text">>, build_json(Status#twitter_status.text)},
+      {<<"user">>, build_json(Status#twitter_status.user)},
+      {<<"created_at">>, build_json(Status#twitter_status.created_at)},
+      {<<"in_reply_to_status_id">>, build_json(Status#twitter_status.in_reply_to_status_id)},
+      {<<"in_reply_to_user_id">>, build_json(Status#twitter_status.in_reply_to_user_id)},
+      {<<"favorited">>, build_json(Status#twitter_status.favorited)},
+      {<<"truncated">>, build_json(Status#twitter_status.truncated)},
+      {<<"source">>, build_json(Status#twitter_status.source)}
+    ]
+  };
+build_json(DirectMessage) when is_record(DirectMessage, twitter_direct_message) ->
+  {struct, 
+    [
+      {<<"id">>, build_json(DirectMessage#twitter_direct_message.id)},
+      {<<"text">>, build_json(DirectMessage#twitter_direct_message.text)},
+      {<<"created_at">>, build_json(DirectMessage#twitter_direct_message.created_at)},
+      {<<"sender">>, build_json(DirectMessage#twitter_direct_message.sender)},
+      {<<"recipient">>, build_json(DirectMessage#twitter_direct_message.recipient)}
+    ]
+  };
+build_json(RateLimitStatus) when is_record(RateLimitStatus, twitter_rate_limit_status) ->
+  {struct, 
+    [
+      {<<"remaining_hits">>, build_json(RateLimitStatus#twitter_rate_limit_status.remaining_hits)},
+      {<<"hourly_limit">>, build_json(RateLimitStatus#twitter_rate_limit_status.hourly_limit)},
+      {<<"reset_time_in_seconds">>, build_json(RateLimitStatus#twitter_rate_limit_status.reset_time_in_seconds)},
+      {<<"reset_time">>, build_json(RateLimitStatus#twitter_rate_limit_status.reset_time)}
+    ]
+  };
+build_json(SearchTrend) when is_record(SearchTrend, twitter_search_trend) ->
+  {struct, 
+    [
+      {<<"name">>, build_json(SearchTrend#twitter_search_trend.name)},
+      {<<"url">>, build_json(SearchTrend#twitter_search_trend.url)}
+    ]
+  };
+build_json(SearchResults) when is_record(SearchResults, twitter_search_results) ->
+  {struct, 
+    [
+      {<<"results">>, build_json(SearchResults#twitter_search_results.results)},
+      {<<"since_id">>, build_json(SearchResults#twitter_search_results.since_id)},
+      {<<"max_id">>, build_json(SearchResults#twitter_search_results.max_id)},
+      {<<"refresh_url">>, build_json(SearchResults#twitter_search_results.refresh_url)},
+      {<<"results_per_page">>, build_json(SearchResults#twitter_search_results.results_per_page)},
+      {<<"total">>, build_json(SearchResults#twitter_search_results.total)},
+      {<<"page">>, build_json(SearchResults#twitter_search_results.page)},
+      {<<"q">>, build_json(SearchResults#twitter_search_results.q)}
+    ]
+  };
+build_json(SearchResult) when is_record(SearchResult, twitter_search_result) ->
+  {struct, 
+    [
+      {<<"id">>, build_json(SearchResult#twitter_search_result.id)},
+      {<<"text">>, build_json(SearchResult#twitter_search_result.text)},
+      {<<"to_user_id">>, build_json(SearchResult#twitter_search_result.to_user_id)},
+      {<<"from_user">>, build_json(SearchResult#twitter_search_result.from_user)},
+      {<<"from_user_id">>, build_json(SearchResult#twitter_search_result.from_user_id)},
+      {<<"iso_language_code">>, build_json(SearchResult#twitter_search_result.iso_language_code)},
+      {<<"profile_image_url">>, build_json(SearchResult#twitter_search_result.profile_image_url)},
+      {<<"created_at">>, build_json(SearchResult#twitter_search_result.created_at)}
+    ]
+  };
+build_json(_) -> null.
 
 %%%-------------------------------------------------------------------
 %%% Private API
