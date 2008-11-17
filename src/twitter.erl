@@ -328,6 +328,8 @@ build_json(undefined) -> null;
 build_json(null) -> null;
 build_json(false) -> false;
 build_json(true) -> true;
+build_json(Atom) when is_atom(Atom) ->
+  atom_to_list(Atom);
 build_json({Date, Time}) when is_tuple(Date) andalso size(Date) == 3, 
                               is_tuple(Time) andalso size(Time) == 3 ->
   httpd_util:rfc1123_date({Date, Time});
