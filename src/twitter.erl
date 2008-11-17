@@ -329,10 +329,10 @@ build_json(null) -> null;
 build_json(false) -> false;
 build_json(true) -> true;
 build_json(Atom) when is_atom(Atom) ->
-  atom_to_list(Atom);
+  list_to_binary(atom_to_list(Atom));
 build_json({Date, Time}) when is_tuple(Date) andalso size(Date) == 3, 
                               is_tuple(Time) andalso size(Time) == 3 ->
-  httpd_util:rfc1123_date({Date, Time});
+  list_to_binary(httpd_util:rfc1123_date({Date, Time}));
 build_json(User) when is_record(User, twitter_user) ->
   {struct, 
     [
