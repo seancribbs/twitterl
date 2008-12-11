@@ -222,7 +222,7 @@ friendship_exists(Auth, User1, User2) when is_tuple(Auth) andalso size(Auth) == 
 %%%-------------------------------------------------------------------
 verify_credentials(Auth) when is_tuple(Auth) andalso size(Auth) == 2 ->
   try get_json("http://twitter.com/account/verify_credentials.json", Auth) of
-    {struct, [{<<"authorized">>, true}]} -> true;
+    {struct, _} -> true;  % Naive, but it will probably work because of the 401 code when unauthorized
     _ -> false
   catch
     throw:{error, authorization_required} -> false;
